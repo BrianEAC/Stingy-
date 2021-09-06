@@ -66,9 +66,9 @@ const Total = ({ incomes, expenses }) => {
   return (
     <div>
       <ul className="total">
-        <li>Incomes: {incomes}</li>
-        <li>Expenses: {expenses}</li>
-        <li>Total: {incomes - expenses}</li>
+        <li>Incomes: ${incomes}</li>
+        <li>Expenses: ${expenses}</li>
+        <li>Total: ${incomes - expenses}</li>
       </ul>
     </div>
   );
