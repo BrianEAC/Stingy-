@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import movServices from './services/movements'
 import "./App.css";
 
 const SubmitForm = ({
@@ -30,7 +31,7 @@ const SubmitForm = ({
             onChange={handleChange}
             checked={!checked}
           />
-          <label htmlFor="radio-two">Excome </label>
+          <label htmlFor="radio-two">Expense </label>
         </div>
         <div>
           Amount: $
@@ -53,11 +54,12 @@ const SubmitForm = ({
   );
 };
 
-const Movements = ({ movementType, className }) => {
-  return movementType.map((mov) => (
+const Movements = ({ movements, className, handleDelete }) => {
+  return movements.map((mov) => (
     <ul className={className}>
       <h3>{mov.description}</h3> <li>${mov.value} </li>
       <li>{mov.type}</li>
+      <button onClick={()=>handleDelete(mov._id)}>delete</button>
     </ul>
   ));
 };
@@ -80,7 +82,15 @@ function App() {
   const [expenses, setExpense] = useState([]);
   const [expenseName, setExpenseName] = useState("");
   const [money, setMoney] = useState("");
-  const [isChecked, setChecked] = useState(true); //
+  const [isChecked, setChecked] = useState(true); 
+  useEffect(() => {
+    movServices
+      .getAll()
+      .then(res => setMovements(res.data)
+      )
+    }, [movements])
+    
+  
 
   const handleType = (e) => {
     setExpenseName(e.target.value);
@@ -89,39 +99,49 @@ function App() {
   const handleMoney = (e) => {
     setMoney(Number(e.target.value));
   };
+
   const addNew = (e) => {
     e.preventDefault();
     if (isChecked) {
       const incomeObject = {
         description: expenseName,
-        value: money,
+        value: Number(money),
         type: "income",
       };
-      setIncome(incomes.concat(incomeObject));
-      setMoney("");
-      setExpenseName("");
-      setMovements(movements.concat(incomeObject));
+      movServices
+        .create(incomeObject)
+        .then(res => {  
+          setIncome(incomes.concat(res.data));
+          setMoney("");
+          setExpenseName("");
+          setMovements(movements.concat(res.data));
+        })
     } else {
       const expenseObject = {
         description: expenseName,
-        value: money,
+        value: Number(money),
         type: "expense",
       };
-      setExpense(expenses.concat(expenseObject));
-      setMoney("");
-      setExpenseName("");
-      setMovements(movements.concat(expenseObject));
+      movServices
+        .create(expenseObject)
+        .then(res => { 
+          setExpense(expenses.concat(res.data));
+          setMoney("");
+          setExpenseName("");
+          setMovements(movements.concat(res.data));
+        })
+     
     }
   };
 
-  const getIncomes = incomes.reduce((a, b) => a + b.value, 0);
-
-  const getExpenses = expenses.reduce((a, b) => a + b.value, 0);
 
   const handleChange = (e) => {
     setChecked(!isChecked);
   };
 
+  const eraseMov = (id) => {
+    movServices.erase(id)
+  }
     
 
   return (
@@ -143,11 +163,11 @@ function App() {
           submit={addNew}
         />
         <div className="movements">
-          <Movements movementType={movements} className="movDetail" />
+          <Movements movements={movements} className="movDetail" handleDelete={eraseMov} />
         </div>
         <div>
           <h2>Total movements:</h2>.
-          <Total incomes={getIncomes} expenses={getExpenses} />
+          <Total incomes={movements.filter(mov => mov.type === 'income').reduce((a, b) => a + b.value, 0)} expenses={movements.filter(mov => mov.type === 'expense').reduce((a, b) => a + b.value, 0)} />
         </div>
       </div>
     </div>
